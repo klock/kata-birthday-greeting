@@ -1,53 +1,35 @@
 package fr.artisandeveloppeur;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.Calendar;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
         String fileName = "../employees.txt";
+        processFile(fileName);
+    }
+
+    private static void processFile(String fileName) {
         try {
-            FileReader fileReader =  new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-
             System.out.println("Reading file...");
-            String line;
-            Boolean first_line = true;
-            while((line = bufferedReader.readLine()) != null) {
-              try {
-                    if (first_line) {
-                        first_line = false;
-                    } else {
-                        String[] tokens = line.split(",");
-                        for (int i = 0; i < tokens.length; i++)
-                            tokens[i] = tokens[i].trim();
+            List<String> allLines = Files.readAllLines(Paths.get(fileName));
 
-                        if (tokens.length == 4 ) {
-                            String[] date = tokens[2].split("/");
-                            if (date.length == 3) {
-                                Calendar cal = Calendar.getInstance();
-                                if (cal.get(Calendar.DATE) == Integer.parseInt(date[0]) && cal.get(Calendar.MONTH) == (Integer.parseInt(date[1])-1)) {
-                                    Main.sendEmail(tokens[3], "Joyeux Anniversaire !", "Bonjour " + tokens[0] + ",\nJoyeux Anniversaire !\nA bientôt,");
-                                }
-                            } else {
-                                throw new Exception("Cannot read birthdate for " + tokens[0] + " " + tokens[1]);
-                            }
-                        } else {
-                            throw new Exception("Invalid file format");
-                        }
-                    }
+            BirthdayGreeter birthdayGreeter = new BirthdayGreeter();
+
+            for (int i = 1; i < allLines.size(); i++) {
+                try {
+                    birthdayGreeter.processLine(allLines.get(i));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            bufferedReader.close();
             System.out.println("Batch job done.");
         }
-        catch(FileNotFoundException ex) {
+        catch(InvalidPathException ex) {
             System.out.println("Unable to open file '" + fileName + "'");
         }
         catch(IOException ex) {
@@ -55,10 +37,4 @@ public class Main {
         }
     }
 
-    public static void sendEmail(String to, String title, String body) {
-        System.out.println("Sending email to : " + to);
-        System.out.println("Title: " + title);
-        System.out.println("Body: Body\n" + body);
-        System.out.println("-------------------------");
-    }
 }
